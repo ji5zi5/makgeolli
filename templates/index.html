@@ -1,0 +1,902 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>막걸리 발효 진단</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- HEIC to Any Converter Library -->
+    <script src="https://cdn.jsdelivr.net/npm/heic2any@0.0.3/dist/heic2any.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #4a90e2; /* Modern Blue */
+            --secondary-color: #e9ecef; /* Light Gray */
+            --background-color: #f8f9fa;
+            --card-bg-color: #ffffff;
+            --text-color: #212529;
+            --text-light-color: #6c757d;
+            --border-color: #dee2e6;
+            --border-radius: 16px;
+            --box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+            --font-family: 'Noto Sans KR', sans-serif;
+        }
+        
+
+        body {
+            font-family: var(--font-family);
+            background-color: var(--background-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 2rem;
+            box-sizing: border-box;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 650px;
+            background-color: var(--card-bg-color);
+            border-radius: var(--border-radius);
+            box-shadow: var(--box-shadow);
+            padding: 3rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+
+        h1 {
+            color: var(--text-color);
+            margin: 0 0 1rem 0;
+            font-weight: 700;
+            font-size: 2.25rem;
+        }
+
+        .upload-area {
+            border: 2px dashed var(--border-color);
+            border-radius: 12px;
+            padding: 3rem;
+            cursor: pointer;
+            transition: background-color 0.2s, border-color 0.2s;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1rem;
+            background-color: #fafbfc;
+        }
+
+        .upload-area:hover {
+            background-color: #f1f5f8;
+            border-color: var(--primary-color);
+        }
+        
+        .upload-area svg {
+            width: 48px;
+            height: 48px;
+            color: var(--primary-color);
+        }
+
+        .upload-area span {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-light-color);
+        }
+
+        #file-input {
+            display: none;
+        }
+
+        #instruction {
+            font-size: 1.1rem;
+            font-weight: 500;
+            color: var(--text-light-color);
+            min-height: 1.5rem;
+            background-color: var(--secondary-color);
+            padding: 1rem 1.5rem;
+            border-radius: 10px;
+            line-height: 1.6;
+            margin: 1rem 0;
+        }
+
+        .image-container {
+            position: relative;
+            max-width: 100%;
+            margin: 1rem auto;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+
+        #image-preview {
+            display: block;
+            max-width: 100%;
+            height: auto;
+            max-height: 60vh;
+            margin: 0 auto; /* Center the image */
+        }
+        
+        #image-preview.crosshair-cursor {
+            cursor: crosshair;
+        }
+
+        .click-marker {
+            position: absolute;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            background-color: rgba(255, 26, 104, 0.9);
+            border: 2px solid white;
+            transform: translate(-50%, -50%);
+            pointer-events: none;
+            box-shadow: 0 2px 6px rgba(0,0,0,0.4);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            color: white;
+            font-weight: bold;
+            font-size: 1rem;
+        }
+
+        .action-button {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 0.9rem 2rem;
+            border-radius: 12px;
+            font-size: 1.1rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s ease-in-out;
+            box-shadow: 0 4px 12px rgba(74, 144, 226, 0.3);
+        }
+        
+
+        .action-button:hover:not(:disabled) {
+            background-color: #3a82d2;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(74, 144, 226, 0.4);
+        }
+        
+        .action-button:active:not(:disabled) {
+            transform: translateY(0);
+            filter: brightness(0.95);
+        }
+
+        .action-button:disabled {
+            background-color: #a0b3c4;
+            cursor: not-allowed;
+            box-shadow: none;
+        }
+
+        #result-container {
+            margin-top: 1.5rem;
+            display: flex;
+            flex-direction: column; /* Stack items vertically */
+            align-items: center;   /* Center items horizontally */
+            gap: 2rem;             /* Add space between boxes */
+        }
+
+        #result {
+            font-size: 1.75rem;
+            font-weight: 700;
+            padding: 1.25rem 2rem;
+            border-radius: 12px;
+            display: inline-block;
+            border: 1px solid var(--primary-color); /* Match .results-box style */
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1); /* Default subtle shadow */
+            transition: all 0.3s ease; /* Add transition for smooth color changes */
+        }
+
+        #result.result-초기 { background-color: #eaf3fe; color: #4a90e2; border-color: #4a90e2; box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2); }
+        #result.result-중기 { background-color: #e6fffa; color: #006644; border-color: #006644; box-shadow: 0 4px 15px rgba(0, 102, 68, 0.2); }
+        #result.result-후기 { background-color: #ffebe6; color: #c53000; border-color: #c53000; box-shadow: 0 4px 15px rgba(197, 48, 0, 0.2); }
+        .result-error { background-color: #fbe9e7; color: #dc3545; border-color: #f5b7b1; }
+
+        .loader {
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid var(--primary-color);
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 1.5rem auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .control-buttons {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            width: 100%;
+        }
+
+        .button-row {
+            display: flex;
+            justify-content: center;
+            gap: 1rem;
+            width: 100%;
+        }
+
+        .control-buttons .action-button {
+            flex-grow: 1;
+        }
+
+        .action-button.secondary {
+            background-color: var(--secondary-color);
+            color: var(--text-light-color);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        }
+
+        .action-button.secondary:hover:not(:disabled) {
+            background-color: #dfe4ea;
+            color: var(--text-color);
+            box-shadow: 0 6px 16px rgba(0, 0, 0, 0.12);
+        }
+
+        /* Tooltip Styles */
+        .result-wrapper {
+            position: relative;
+            display: inline-block;
+        }
+
+        #info-icon-wrapper {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+        }
+
+        #info-icon {
+            cursor: pointer;
+            font-weight: bold;
+            /* color: var(--primary-color); */ /* Removed hardcoded color */
+            /* border: 2px solid var(--primary-color); */ /* Removed hardcoded color */
+            border-width: 2px;
+            border-style: solid;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: inline-flex;
+            justify-content: center;
+            align-items: center;
+            font-size: 0.8rem;
+            transition: all 0.2s ease;
+            background-color: white;
+        }
+
+        #info-icon.active,
+        #info-icon:hover {
+            /* background-color: var(--primary-color); */ /* Moved to dynamic classes */
+            color: white;
+        }
+
+        /* Dynamic colors for info icon */
+        #info-icon.info-icon-초기 { color: #4a90e2; border-color: #4a90e2; }
+        #info-icon.info-icon-중기 { color: #006644; border-color: #006644; }
+        #info-icon.info-icon-후기 { color: #c53000; border-color: #c53000; }
+
+        #info-icon.info-icon-초기:hover, #info-icon.info-icon-초기.active { background-color: #4a90e2; }
+        #info-icon.info-icon-중기:hover, #info-icon.info-icon-중기.active { background-color: #006644; }
+        #info-icon.info-icon-후기:hover, #info-icon.info-icon-후기.active { background-color: #c53000; }
+
+        #result-description-tooltip {
+            display: block;
+            position: absolute;
+            bottom: calc(100% + 10px); /* Position above the icon with a gap */
+            left: 50%; /* Center horizontally relative to .result-wrapper */
+            transform: translateX(-50%); /* Adjust for true centering */
+            background-color: #333;
+            color: #fff;
+            padding: 1rem;
+            border-radius: 8px;
+            width: 280px;
+            max-width: min(100%, 90vw); /* Max width of parent or 90vw */
+            /* Removed max-height and overflow-y: auto */
+            text-align: left;
+            font-size: 0.9rem;
+            line-height: 1.5;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            z-index: 10;
+            opacity: 0;
+            visibility: hidden;
+            transition: opacity 0.2s ease, visibility 0.2s ease;
+        }
+
+        #result-description-tooltip.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        #result-description-tooltip::before {
+            content: '';
+            position: absolute;
+            top: 100%; /* Position at the bottom of the tooltip */
+            left: var(--arrow-left, 50%); /* Use custom property for horizontal position */
+            transform: translateX(-50%); /* Center the arrow */
+            border-width: 8px; /* Size of the arrow */
+            border-style: solid;
+            border-color: #333 transparent transparent transparent; /* Points down */
+            z-index: 11; /* Ensure it's above the tooltip content if needed */
+        }
+
+        /* Mobile Optimization */
+        @media (max-width: 768px) {
+            body {
+                padding: 1rem;
+            }
+            .container {
+                padding: 2rem;
+                gap: 1.5rem;
+            }
+            h1 {
+                font-size: 1.8rem;
+            }
+            .upload-area {
+                padding: 2rem;
+            }
+            .action-button {
+                padding: 0.8rem 1.5rem;
+                font-size: 1rem;
+            }
+            #result {
+                font-size: 1.5rem;
+            }
+            .button-row {
+                flex-direction: column;
+            }
+            .results-box {
+                max-width: calc(100% - 2rem); /* Ensure some padding from screen edges */
+                margin-left: auto;
+                margin-right: auto;
+            }
+        }
+
+        /* 날짜/시간 입력 필드 스타일 */
+        .datetime-input-container {
+            margin-top: 2rem;
+            margin-bottom: 2rem; /* Added for more vertical space */
+            padding: 1.5rem;
+            background-color: var(--secondary-color);
+            border-radius: 12px;
+        }
+
+        .datetime-input-container input {
+            padding: 0.75rem 1rem;
+            border: 1px solid var(--border-color);
+            border-radius: 10px;
+            font-family: var(--font-family);
+            font-size: 1.1rem;
+            width: 100%;
+            max-width: 320px;
+            box-sizing: border-box;
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .results-box {
+            box-sizing: border-box; /* Prevent padding from adding to the width */
+            background-color: rgba(74, 144, 226, 0.1); /* Light blue tint */
+            border: 1px solid var(--primary-color);
+            border-radius: 16px;
+            padding: 2rem;
+            box-shadow: 0 4px 15px rgba(74, 144, 226, 0.2);
+            text-align: left;
+            width: 100%;
+            max-width: 400px;
+        }
+
+        .results-box p {
+            margin: 0.75rem 0;
+            display: flex;
+            justify-content: space-between;
+            font-size: 1.1rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px dashed rgba(74, 144, 226, 0.3);
+        }
+
+        .results-box p:last-child {
+            border-bottom: none;
+            padding-bottom: 0;
+        }
+
+        .results-box p span {
+            font-weight: 700;
+            color: var(--primary-color);
+            text-align: right;
+        }
+
+        /* Dynamic colors for the additional results box */
+        .results-box.results-box-초기 {
+            background-color: #eaf3fe; /* Light blue */
+            border-color: #4a90e2; /* Primary blue */
+        }
+        .results-box.results-box-중기 {
+            background-color: #e6fffa; /* Light green */
+            border-color: #006644; /* Dark green */
+        }
+        .results-box.results-box-후기 {
+            background-color: #ffebe6; /* Light orange/red */
+            border-color: #c53000; /* Dark orange/red */
+        }
+
+        /* Text colors for spans within the results box */
+        .results-box.results-box-초기 p span {
+            color: #4a90e2; /* Matching .result-초기 text color */
+        }
+        .results-box.results-box-중기 p span {
+            color: #006644; /* Matching .result-중기 text color */
+        }
+        .results-box.results-box-후기 p span {
+            color: #c53000; /* Matching .result-후기 text color */
+        }
+
+        #home-button-after-result {
+            margin-top: 2.5rem; /* Increased margin to push it down */
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>막걸리 발효 단계 진단</h1>
+        
+        <label for="file-input" class="upload-area" id="upload-area">
+            <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5" />
+            </svg>
+            <span>진단할 사진을 업로드하세요</span>
+        </label>
+        <input type="file" id="file-input" accept="image/*">
+
+        <div id="instruction-container" style="display: none;">
+            <p id="instruction"></p>
+        </div>
+
+        <div class="image-container" id="image-container" style="display: none;">
+            <img id="image-preview" alt="업로드된 이미지">
+        </div>
+
+        <div class="datetime-input-container hidden" id="datetime-container">
+            <input type="datetime-local" id="start-date-input">
+        </div>
+
+        <div class="control-buttons">
+            <div class="button-row">
+                <button class="action-button" id="analyze-button" style="display: none;">분석 시작!</button>
+                <button class="action-button" id="next-button" style="display: none;">다음</button>
+                <button class="action-button secondary" id="undo-button" style="display: none;">선택 취소</button>
+            </div>
+            <button class="action-button secondary" id="home-button" style="display: none;">메인으로</button>
+        </div>
+
+        <div class="loader" id="loader"></div>
+        <div id="result-container">
+            <div class="result-wrapper">
+                <span id="result"></span>
+                <div id="info-icon-wrapper" style="display: none;">
+                    <span id="info-icon">?</span>
+                </div>
+                <div id="result-description-tooltip"></div>
+            </div>
+            <!-- New elements for additional results -->
+            <div id="additional-results" class="results-box" style="display: none;">
+                <p>예상 pH: <span id="estimated-ph"></span></p>
+                <p>예상 도수: <span id="estimated-alcohol"></span></p>
+                <p>예상 당도: <span id="estimated-brix"></span></p>
+                <p>남은 시간: <span id="remaining-time"></span></p>
+            </div>
+        </div>
+        <button class="action-button secondary" id="home-button-after-result" style="display: none;">메인으로</button>
+    </div>
+
+    <script>
+        const fileInput = document.getElementById('file-input');
+        const uploadArea = document.getElementById('upload-area');
+        const instructionContainer = document.getElementById('instruction-container');
+        const instructionEl = document.getElementById('instruction');
+        const imageContainer = document.getElementById('image-container');
+        const imagePreview = document.getElementById('image-preview');
+        const analyzeButton = document.getElementById('analyze-button');
+        const nextButton = document.getElementById('next-button');
+        const undoButton = document.getElementById('undo-button');
+        const homeButton = document.getElementById('home-button');
+        const homeButtonAfterResult = document.getElementById('home-button-after-result');
+        const resultContainer = document.getElementById('result-container');
+        const resultEl = document.getElementById('result');
+        const loader = document.getElementById('loader');
+        const additionalResultsEl = document.getElementById('additional-results');
+        const infoIconWrapper = document.getElementById('info-icon-wrapper');
+        const infoIcon = document.getElementById('info-icon');
+        const resultDescriptionTooltip = document.getElementById('result-description-tooltip');
+
+        // Additional result elements
+        const estimatedPhEl = document.getElementById('estimated-ph');
+        const estimatedAlcoholEl = document.getElementById('estimated-alcohol');
+        const estimatedBrixEl = document.getElementById('estimated-brix');
+        const remainingTimeEl = document.getElementById('remaining-time');
+
+        let state = 'INITIAL';
+        let uploadedFile = null;
+        let schiffCoords = null;
+        let litmusCoords = null;
+        let imageClientDimensions = { width: 0, height: 0 };
+
+        function resetAdditionalResults() {
+            if (estimatedPhEl) estimatedPhEl.textContent = '';
+            if (estimatedAlcoholEl) estimatedAlcoholEl.textContent = '';
+            if (estimatedBrixEl) estimatedBrixEl.textContent = '';
+            if (remainingTimeEl) remainingTimeEl.textContent = '';
+            if (additionalResultsEl) {
+                additionalResultsEl.classList.remove('results-box-초기', 'results-box-중기', 'results-box-후기');
+            }
+        }
+
+        function resetAll() {
+            state = 'INITIAL';
+            uploadedFile = null;
+            schiffCoords = null;
+            litmusCoords = null;
+            imageClientDimensions = { width: 0, height: 0 };
+            fileInput.value = null;
+
+            document.getElementById('datetime-container').classList.add('hidden');
+            document.getElementById('start-date-input').value = '';
+
+            instructionContainer.style.display = 'none';
+            imageContainer.style.display = 'none';
+            imagePreview.src = '';
+            imagePreview.classList.remove('crosshair-cursor');
+            analyzeButton.style.display = 'none';
+            undoButton.style.display = 'none';
+            homeButton.style.display = 'none';
+            homeButtonAfterResult.style.display = 'none';
+            resultContainer.style.display = 'none';
+            if (infoIconWrapper) infoIconWrapper.style.display = 'none';
+            resultDescriptionTooltip.classList.remove('show');
+            if (infoIcon) {
+                infoIcon.classList.remove('active', 'info-icon-초기', 'info-icon-중기', 'info-icon-후기');
+            }
+            resultEl.textContent = '';
+            resultEl.className = '';
+            loader.style.display = 'none';
+            uploadArea.style.display = 'flex';
+            document.querySelectorAll('.click-marker').forEach(m => m.remove());
+            if (additionalResultsEl) additionalResultsEl.style.display = 'none';
+            resetAdditionalResults();
+        }
+
+        fileInput.addEventListener('change', handleFileSelect);
+        undoButton.addEventListener('click', undoLastClick);
+        homeButton.addEventListener('click', resetAll);
+        homeButtonAfterResult.addEventListener('click', resetAll);
+        nextButton.addEventListener('click', () => {
+            if (state === 'CONFIRM_CLICKS') {
+                setState('AWAIT_DATE');
+            }
+        });
+        document.getElementById('start-date-input').addEventListener('change', () => {
+            if (state === 'AWAIT_DATE') {
+                setState('READY_TO_ANALYZE');
+            }
+        });
+
+        function undoLastClick() {
+            if (state === 'AWAIT_LITMUS_CLICK') {
+                schiffCoords = null;
+                const schiffMarker = document.querySelector('.schiff-marker');
+                if (schiffMarker) schiffMarker.remove();
+                setState('AWAIT_SCHIFF_CLICK');
+            } else if (state === 'CONFIRM_CLICKS') {
+                litmusCoords = null;
+                const litmusMarker = document.querySelector('.litmus-marker');
+                if (litmusMarker) litmusMarker.remove();
+                setState('AWAIT_LITMUS_CLICK');
+            } else if (state === 'READY_TO_ANALYZE') {
+                setState('AWAIT_DATE');
+            }
+        }
+
+        const allowedExtensions = ['png', 'jpg', 'jpeg', 'heic', 'heif', 'bmp', 'tif', 'tiff', 'webp'];
+
+        async function handleFileSelect(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (!allowedExtensions.includes(fileExtension)) {
+                alert(`지원하지 않는 파일 형식입니다. 지원하는 형식: ${allowedExtensions.join(', ')}`);
+                fileInput.value = ''; // Clear the file input
+                return;
+            }
+
+            // The existing HEIC check is still useful for the conversion logic
+            const isHeicExtension = (fileExtension === 'heic' || fileExtension === 'heif');
+
+            resetAll();
+            uploadedFile = file;
+
+            setState('UPLOADING_FILE', isHeicExtension ? 'HEIC 파일을 변환하는 중...' : '이미지 미리보기를 준비하는 중...');
+
+            try {
+                let imageUrl;
+                if (isHeicExtension) {
+                    const convertedBlob = await heic2any({ blob: file, toType: "image/png", quality: 0.8 });
+                    imageUrl = URL.createObjectURL(convertedBlob);
+                } else {
+                    imageUrl = URL.createObjectURL(file);
+                }
+
+                imagePreview.onload = () => {
+                    URL.revokeObjectURL(imagePreview.src);
+                    setState('AWAIT_SCHIFF_CLICK');
+                };
+                imagePreview.src = imageUrl;
+
+            } catch (error) {
+                alert('파일 처리 중 오류가 발생했습니다.');
+                resetAll();
+            }
+        }
+
+        imagePreview.addEventListener('click', handleImageClick);
+
+        function handleImageClick(event) {
+            if (state !== 'AWAIT_SCHIFF_CLICK' && state !== 'AWAIT_LITMUS_CLICK') return;
+
+            imageClientDimensions.width = imagePreview.clientWidth;
+            imageClientDimensions.height = imagePreview.clientHeight;
+
+            const rect = imagePreview.getBoundingClientRect();
+            const x = event.clientX - rect.left;
+            const y = event.clientY - rect.top;
+
+            if (state === 'AWAIT_SCHIFF_CLICK') {
+                document.querySelectorAll('.schiff-marker').forEach(m => m.remove());
+            } else if (state === 'AWAIT_LITMUS_CLICK') {
+                document.querySelectorAll('.litmus-marker').forEach(m => m.remove());
+            }
+
+            addClickMarker(x, y, state === 'AWAIT_SCHIFF_CLICK' ? 1 : 2);
+
+            if (state === 'AWAIT_SCHIFF_CLICK') {
+                schiffCoords = { x, y };
+                setState('AWAIT_LITMUS_CLICK');
+            } else if (state === 'AWAIT_LITMUS_CLICK') {
+                litmusCoords = { x, y };
+                setState('CONFIRM_CLICKS');
+            }
+        }
+
+        function addClickMarker(x, y, number) {
+            const marker = document.createElement('div');
+            marker.className = `click-marker ${number === 1 ? 'schiff-marker' : 'litmus-marker'}`;
+            marker.style.left = `${x + imagePreview.offsetLeft}px`;
+            marker.style.top = `${y + imagePreview.offsetTop}px`;
+            marker.textContent = number;
+            imageContainer.appendChild(marker);
+        }
+
+        analyzeButton.addEventListener('click', handleAnalysis);
+
+        async function handleAnalysis() {
+            if (state !== 'READY_TO_ANALYZE' || !uploadedFile) return;
+
+            setState('ANALYZING');
+
+            const startDateInput = document.getElementById('start-date-input').value;
+            if (!startDateInput) {
+                alert('발효 시작 시간을 선택해주세요.');
+                setState('AWAIT_DATE');
+                return;
+            }
+
+            const selectedDate = new Date(startDateInput);
+            const now = new Date();
+            if (selectedDate > now) {
+                alert('발효 시작 시간은 현재 시간보다 이전이어야 합니다. 정확한 시간을 입력해주세요.');
+                setState('AWAIT_DATE');
+                return;
+            }
+
+            const image = imagePreview;
+            if (imageClientDimensions.width === 0 || imageClientDimensions.height === 0) {
+                alert('이미지 크기를 계산할 수 없습니다. 다시 시도해주세요.');
+                resetAll();
+                return;
+            }
+            const xRatio = image.naturalWidth / imageClientDimensions.width;
+            const yRatio = image.naturalHeight / imageClientDimensions.height;
+
+            const formData = new FormData();
+            formData.append('file', uploadedFile);
+            formData.append('start_date', startDateInput);
+            formData.append('schiff_x', schiffCoords.x * xRatio);
+            formData.append('schiff_y', schiffCoords.y * yRatio);
+            formData.append('litmus_x', litmusCoords.x * xRatio);
+            formData.append('litmus_y', litmusCoords.y * yRatio);
+
+            try {
+                const response = await fetch('/predict', { method: 'POST', body: formData });
+                const data = await response.json();
+
+                if (!response.ok) throw new Error(data.error || `HTTP error! status: ${response.status}`);
+
+                displayResult(data);
+
+            } catch (error) {
+                displayResult({ error: `분석 실패: ${error.message}` });
+            } finally {
+                setState('RESULT');
+            }
+        }
+
+        function displayResult(data) {
+            resultContainer.style.display = 'flex';
+            resultDescriptionTooltip.classList.remove('show');
+            if (infoIcon) {
+                infoIcon.classList.remove('active', 'info-icon-초기', 'info-icon-중기', 'info-icon-후기');
+            }
+
+            if (data.error) {
+                resultEl.textContent = data.error;
+                resultEl.className = 'result-error';
+                resultDescriptionTooltip.innerHTML = '';
+                if (infoIconWrapper) infoIconWrapper.style.display = 'none';
+                if (additionalResultsEl) additionalResultsEl.style.display = 'none';
+            } else if (data.prediction_state) {
+                resultEl.textContent = `진단 결과: ${data.prediction_state}`;
+                resultEl.className = `result-${data.prediction_state}`;
+                if (additionalResultsEl) {
+                    additionalResultsEl.style.display = 'block';
+                    additionalResultsEl.classList.remove('results-box-초기', 'results-box-중기', 'results-box-후기');
+                    additionalResultsEl.classList.add(`results-box-${data.prediction_state}`);
+                }
+                if (infoIcon) {
+                    infoIcon.classList.add(`info-icon-${data.prediction_state}`);
+                }
+
+                if (estimatedPhEl) estimatedPhEl.textContent = data.estimated_ph;
+                if (estimatedAlcoholEl) estimatedAlcoholEl.textContent = data.estimated_alcohol;
+                if (estimatedBrixEl) estimatedBrixEl.textContent = data.estimated_brix;
+                if (remainingTimeEl) remainingTimeEl.textContent = data.prediction_time_to_optimal;
+
+                const descriptions = {
+                    '초기': '효모가 활발하게 활동하며 당분을 알코올로 바꾸는 시기입니다. pH가 빠르게 낮아지며 막걸리의 기반이 형성됩니다.',
+                    '중기': '알코올 도수가 최고치에 도달하고 맛과 향이 균형을 이루는 가장 이상적인 시기입니다. 완충 작용으로 인해 pH가 안정적으로 유지됩니다.',
+                    '후기': '[경고] 초산균의 활동으로 산패가 시작되었을 가능성이 높습니다. 알코올이 초산으로 변하며 시큼한 맛과 향이 강해질 수 있습니다. 음용에 주의가 필요합니다.'
+                };
+
+                const description = descriptions[data.prediction_state];
+                if (description) {
+                    resultDescriptionTooltip.innerHTML = description;
+                    if (infoIconWrapper) infoIconWrapper.style.display = 'block';
+                } else {
+                    if (infoIconWrapper) infoIconWrapper.style.display = 'none';
+                }
+            } else {
+                resultEl.textContent = '알 수 없는 결과입니다.';
+                resultEl.className = 'result-error';
+                console.error("서버로부터 성공 응답을 받았으나, 'prediction_state' 또는 'error' 키를 찾을 수 없습니다:", data);
+            }
+        }
+
+        if (infoIcon && resultDescriptionTooltip && infoIconWrapper) {
+            infoIcon.addEventListener('click', (event) => {
+                event.stopPropagation();
+                const isShowing = resultDescriptionTooltip.classList.toggle('show');
+                infoIcon.classList.toggle('active');
+
+                if (isShowing) {
+                    requestAnimationFrame(() => {
+                        const tooltipRect = resultDescriptionTooltip.getBoundingClientRect();
+                        const iconRect = infoIcon.getBoundingClientRect();
+                        const resultWrapperRect = document.querySelector('.result-wrapper').getBoundingClientRect();
+                        const iconCenterRelativeToWrapper = (iconRect.left + iconRect.width / 2) - resultWrapperRect.left;
+                        const tooltipLeftRelativeToWrapper = tooltipRect.left - resultWrapperRect.left;
+                        let desiredArrowLeft = iconCenterRelativeToWrapper - tooltipLeftRelativeToWrapper;
+                        const arrowWidth = 16;
+                        const minArrowLeft = arrowWidth / 2;
+                        const maxArrowLeft = tooltipRect.width - (arrowWidth / 2);
+                        resultDescriptionTooltip.style.setProperty('--arrow-left', `${desiredArrowLeft}px`);
+                    });
+                }
+            });
+
+            document.addEventListener('click', (event) => {
+                if (!infoIcon.contains(event.target) && !resultDescriptionTooltip.contains(event.target)) {
+                    resultDescriptionTooltip.classList.remove('show');
+                    infoIcon.classList.remove('active');
+                }
+            });
+        }
+
+        function setState(newState, message = null) {
+            state = newState;
+
+            imagePreview.classList.remove('crosshair-cursor');
+            analyzeButton.style.display = 'none';
+            analyzeButton.disabled = true;
+            undoButton.style.display = 'none';
+            nextButton.style.display = 'none';
+            homeButton.style.display = 'block';
+            loader.style.display = 'none';
+            resultContainer.style.display = 'none';
+            document.getElementById('datetime-container').classList.add('hidden');
+            imageContainer.style.display = 'block';
+
+            switch (state) {
+                case 'INITIAL':
+                    instructionEl.textContent = '';
+                    homeButton.style.display = 'none';
+                    uploadArea.style.display = 'flex';
+                    instructionContainer.style.display = 'none';
+                    imageContainer.style.display = 'none';
+                    homeButtonAfterResult.style.display = 'none';
+                    break;
+                case 'UPLOADING_FILE':
+                    instructionEl.textContent = message || '파일 업로드 중...';
+                    loader.style.display = 'block';
+                    instructionContainer.style.display = 'block';
+                    uploadArea.style.display = 'none';
+                    break;
+                case 'AWAIT_SCHIFF_CLICK':
+                    instructionEl.textContent = '1단계: 사진에서 시프 시약의 색상 부분을 클릭하세요.';
+                    imagePreview.classList.add('crosshair-cursor');
+                    break;
+                case 'AWAIT_LITMUS_CLICK':
+                    instructionEl.textContent = '2단계: 이제 리트머스 종이의 색상 부분을 클릭하세요.';
+                    imagePreview.classList.add('crosshair-cursor');
+                    undoButton.style.display = 'block';
+                    break;
+                case 'CONFIRM_CLICKS':
+                    instructionEl.textContent = '선택한 위치가 맞는지 확인하고 다음 버튼을 누르세요.';
+                    nextButton.style.display = 'block';
+                    undoButton.style.display = 'block';
+                    break;
+                case 'AWAIT_DATE':
+                    instructionEl.textContent = '3단계: 발효 시작 시간을 선택하세요.';
+                    document.getElementById('datetime-container').classList.remove('hidden');
+                    imageContainer.style.display = 'none';
+                    undoButton.style.display = 'none';
+                    analyzeButton.style.display = 'block'; // Show disabled button
+                    analyzeButton.disabled = true;
+                    break;
+                case 'READY_TO_ANALYZE':
+                    instructionEl.textContent = '준비 완료! 아래 버튼을 눌러 분석을 시작하세요.';
+                    document.getElementById('datetime-container').classList.remove('hidden');
+                    imageContainer.style.display = 'none';
+                    analyzeButton.style.display = 'block';
+                    analyzeButton.disabled = false; // Enable the button
+                    undoButton.style.display = 'none'; // Hide the undo button
+                    break;
+                case 'ANALYZING':
+                    instructionEl.textContent = '결과를 분석 중입니다... 잠시만 기다려주세요.';
+                    loader.style.display = 'block';
+                    document.getElementById('datetime-container').classList.add('hidden');
+                    imageContainer.style.display = 'none';
+                    break;
+                case 'RESULT':
+                    instructionEl.textContent = '분석이 완료되었습니다. 다른 사진으로 진단하려면 메인으로 버튼을 누르세요.';
+                    homeButton.style.display = 'none';
+                    homeButtonAfterResult.style.display = 'block';
+                    resultContainer.style.display = 'flex';
+                    imageContainer.style.display = 'none';
+                    break;
+            }
+        }
+
+        resetAll();
+    </script>
